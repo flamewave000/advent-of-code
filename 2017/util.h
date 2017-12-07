@@ -6,6 +6,7 @@
 #include <string>
 #include <fstream>
 #include <streambuf>
+#include <sstream>
 
 std::string get_file(const char * filename) {
     std::ifstream ifs(filename);
