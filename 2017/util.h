@@ -8,6 +8,7 @@
 #include <streambuf>
 #include <sstream>
 #include <vector>
+#include <memory>
 #include "../stringx/include/stringx.hpp"
 
 std::string get_file(const char *filename)
