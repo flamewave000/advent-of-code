@@ -10,7 +10,6 @@ int main(int argc, const char *argv[])
 {
     config c = proc(argc, argv, 4);
 
-    cout << "Data: " << c.input << '\n';
     if (c.puzzle == 1)
         puzzle_a(c.input);
     else
@@ -18,13 +17,13 @@ int main(int argc, const char *argv[])
     return 0;
 }
 
-void puzzle_a(const string &input)
+void process(const string &input, function<bool(const unordered_set<string> &, const vector<string> &)> validate)
 {
     vector<string> lines = split(input, '\n');
-
     int good = 0;
     int bad = 0;
     unordered_set<string> set;
+    cout << "lines: " << lines.size() << '\n';
     for (auto line : lines)
     {
         auto words = split(line, ' ');
@@ -40,17 +39,36 @@ void puzzle_a(const string &input)
                 break;
             set.insert(word);
         }
-        if (set.size() == words.size())
+        if (validate(set, words))
             good++;
         else
             bad++;
     }
-    cout << " bad: " << bad << '\n';
-    cout << "good: " << good << endl;
+    cout << "  bad: " << bad << '\n';
+    cout << " good: " << good << endl;
+}
+
+void puzzle_a(const string &input)
+{
+    process(input, [](auto set, auto words) -> bool {
+        return set.size() == words.size();
+    });
 }
 
 void puzzle_b(const string &input)
 {
+    process(input, [](auto set, auto words) -> bool {
+        if (set.size() != words.size())
+            return false;
+        for(size_t c = 0, size = words.size(); c < size; c++) {
+            std::sort(words[c].begin(), words[c].end());
+            for(int i = c - 1; i >= 0; i--) {
+                if(words[c] == words[i])
+                    return false;
+            }
+        }
+        return true;
+    });
 }
 
 /*
