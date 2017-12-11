@@ -10,6 +10,9 @@ day3: day3.cpp
 
 day4: day4.cpp
 	g++ -std=c++14 -static day4.cpp -L../stringx/lib -lstringx -o bin/day4
+
+day5: day5.cpp
+	g++ -std=c++14 -static day5.cpp -L../stringx/lib -lstringx -o bin/day5
 	
 clean:
 	rm -Rf bin/* || true
