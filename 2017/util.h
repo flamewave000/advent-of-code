@@ -9,6 +9,7 @@
 #include <sstream>
 #include <vector>
 #include <memory>
+#include <unordered_set>
 #include "../stringx/include/stringx.hpp"
 
 std::string get_file(const char *filename)
