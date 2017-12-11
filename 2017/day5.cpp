@@ -14,7 +14,7 @@ int main(int argc, const char *argv[])
     return 0;
 }
 
-vector<int> values(const string &input)
+int process(const string &input, function<void(int &)> process_num)
 {
     vector<int> nums;
     istringstream iss(input);
@@ -24,28 +24,31 @@ vector<int> values(const string &input)
         iss >> num;
         nums.push_back(num);
     }
-    return std::move(nums);
-}
 
-int puzzle_a(const string &input)
-{
-    auto nums = values(input);
     size_t cur = 0, size = nums.size(), jumps = 0, next = 0;
     cout << "numbers: " << size << '\n';
     while (cur >= 0 && cur < size)
     {
         next = cur + nums[cur];
-        nums[cur]++;
+        process_num(nums[cur]);
         jumps++;
         cur = next;
     }
     return jumps;
 }
 
+int puzzle_a(const string &input)
+{
+    return process(input, [](int& num) {
+        num++;
+    });
+}
+
 int puzzle_b(const string &input)
 {
-    auto nums = values(input);
-    return 0;
+    return process(input, [](int& num) {
+        num += num > 2 ? -1 : 1;
+    });
 }
 
 /*
@@ -71,5 +74,10 @@ Positive jumps ("forward") move downward; negative jumps move upward. For legibi
  2  5  0  1  -2  - jump 4 steps forward, escaping the maze.
 In this example, the exit is reached in 5 steps.
 How many steps does it take to reach the exit?
+
+--- Part Two ---
+Now, the jumps are even stranger: after each jump, if the offset was three or more, instead decrease it by 1. Otherwise, increase it by 1 as before.
+Using this rule with the above example, the process now takes 10 steps, and the offset values after finding the exit are left as 2 3 2 3 -1.
+How many steps does it now take to reach the exit?
 
 */
