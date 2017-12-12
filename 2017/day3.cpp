@@ -4,33 +4,34 @@ using namespace std;
 
 int puzzle_a(const string &input);
 int puzzle_b(const string &input);
-namespace direction
+enum class direction : unsigned char
 {
-    static const int left = 1;
-    static const int right = 2;
-    static const int up = 3;
-    static const int down = 4;
-}
+    none = 0,
+    left = 1,
+    right = 2,
+    up = 3,
+    down = 4
+};
 struct cell
 {
     cell *l, *r, *t, *b, *lt, *rt, *lb, *rb;
     int value;
-    int direction;
+    direction dir;
     cell()
     {
         l = r = t = b = lt = rt = lb = rb = nullptr;
         value = 0;
-        direction = 0;
+        dir = direction::none;
     }
     cell *make_next()
     {
         cell *next = new cell();
-        switch (direction)
+        switch (dir)
         {
         case direction::left:
             if (b == nullptr)
             {
-                next->direction = direction::down;
+                next->dir = direction::down;
                 next->t = this;
                 next->rt = r;
                 next->r = rb;
@@ -39,7 +40,7 @@ struct cell
             }
             else
             {
-                next->direction = direction::left;
+                next->dir = direction::left;
                 next->r = this;
                 next->rb = b;
                 next->b = lb;
@@ -50,7 +51,7 @@ struct cell
         case direction::right:
             if (t == nullptr)
             {
-                next->direction = direction::up;
+                next->dir = direction::up;
                 next->b = this;
                 next->lb = l;
                 next->l = lt;
@@ -59,7 +60,7 @@ struct cell
             }
             else
             {
-                next->direction = direction::right;
+                next->dir = direction::right;
                 next->l = this;
                 next->lt = t;
                 next->t = rt;
@@ -70,7 +71,7 @@ struct cell
         case direction::up:
             if (l == nullptr)
             {
-                next->direction = direction::left;
+                next->dir = direction::left;
                 next->r = this;
                 next->rb = b;
                 next->b = lb;
@@ -79,7 +80,7 @@ struct cell
             }
             else
             {
-                next->direction = direction::up;
+                next->dir = direction::up;
                 next->b = this;
                 next->lb = l;
                 next->l = lt;
@@ -90,7 +91,7 @@ struct cell
         case direction::down:
             if (r == nullptr)
             {
-                next->direction = direction::right;
+                next->dir = direction::right;
                 next->l = this;
                 next->lt = t;
                 next->t = rt;
@@ -99,7 +100,7 @@ struct cell
             }
             else
             {
-                next->direction = direction::down;
+                next->dir = direction::down;
                 next->t = this;
                 next->rt = r;
                 next->r = rb;
@@ -167,7 +168,7 @@ int puzzle_b(const string &input)
     int locale = atoi(input.c_str());
     cell *centre = new cell();
     centre->value = 1;
-    centre->direction = direction::down;
+    centre->dir = direction::down;
     cell *curr = centre;
     cells.push_back(curr);
     while(curr->value < locale) {
