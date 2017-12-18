@@ -10,6 +10,7 @@
 #include <vector>
 #include <memory>
 #include <unordered_set>
+#include <unordered_map>
 #include <functional>
 #include <algorithm>
 #include "../stringx/include/stringx.hpp"

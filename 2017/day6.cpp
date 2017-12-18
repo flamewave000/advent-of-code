@@ -35,7 +35,7 @@ union memory {
     };
 };
 
-int puzzle_a(const string &input)
+memory redistribute(const string &input, function<void(memory &)> insert, function<bool(memory &)> unique)
 {
     memory mem = {UINT64_C(0), UINT64_C(0)};
     auto tokens = split(input, '\t');
@@ -44,7 +44,6 @@ int puzzle_a(const string &input)
     {
         mem.blocks[c] = atoi(tokens[c].c_str());
     }
-    unordered_set<memory, memory::hash> set;
     size_t index = 0;
     uint8_t value = UINT64_C(0);
     do
@@ -52,7 +51,7 @@ int puzzle_a(const string &input)
         printf("\rmem: ");
         mem.print();
         fflush(stdout);
-        set.insert(mem);
+        insert(mem);
 
         index = 0;
         for (c = 0; c < 16; c++)
@@ -67,12 +66,29 @@ int puzzle_a(const string &input)
             index = (index + 1) % 16;
             mem.blocks[index]++;
         }
-    } while (set.find(mem) == set.end());
+    } while (unique(mem));
+    return std::move(mem);
+}
+
+int puzzle_a(const string &input)
+{
+    unordered_set<memory, memory::hash> set;
+    auto end = set.end();
+    redistribute(input,
+                 [&set](auto mem) { set.insert(mem); },
+                 [&set, &end](auto mem) -> bool { return set.find(mem) == end; });
     return set.size();
 }
 
 int puzzle_b(const string &input)
 {
+    unordered_map<memory, size_t, memory::hash> map;
+    auto end = map.end();
+    size_t index = 0;
+    memory final = redistribute(input,
+                 [&map, &index](auto mem) { map[mem] = index++; },
+                 [&map, &end](auto mem) -> bool { return map.find(mem) == end; });
+    return map.size() - map[final];
 }
 
 /*
