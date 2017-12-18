@@ -14,7 +14,6 @@ int main(int argc, const char *argv[])
     cout << "\n\nResult:" << (c.puzzle == 1 ? puzzle_a(c.input) : puzzle_b(c.input)) << endl;
     return 0;
 }
-
 struct node
 {
     string name;
@@ -22,6 +21,29 @@ struct node
     vector<string> children;
     string parent;
 };
+typedef unordered_map<string, node> node_map;
+
+size_t calc_weights(const node &self, node_map &nodes)
+{
+    size_t total = self.weight;
+    size_t norm = ~0;
+    size_t child_weight;
+    for (auto child : self.children)
+    {
+        child_weight = calc_weights(nodes[child], nodes);
+        if (norm == ~0)
+            norm = child_weight;
+        else if (norm != child_weight)
+        {
+            cout << endl
+                 << "norm: {0}, curr: {1}"_f % norm % child_weight << endl;
+            throw std::length_error(self.name);
+            return -1;
+        }
+        total += child_weight;
+    }
+    return total;
+}
 
 node process_line(const std::string &line)
 {
@@ -47,9 +69,8 @@ node process_line(const std::string &line)
     }
     return std::move(n);
 }
-unordered_map<string, node> process(const string &input)
+void process(const string &input, node_map &nodes, node &root)
 {
-    unordered_map<string, node> nodes;
     vector<string> lines = split(input, '\n');
     node n;
     for (auto line : lines)
@@ -67,16 +88,21 @@ unordered_map<string, node> process(const string &input)
             }
         }
     }
-    return std::move(nodes);
+    root = nodes.begin()->second;
+    while (root.parent != "")
+    {
+        root = nodes[root.parent];
+    }
 }
-void draw_nodes(const unordered_map<string, node> &nodes, const node &root, int count = 0)
+void draw_nodes(const node_map &nodes, const node &root, int count = 0)
 {
     char *tabs = new char[count + 2];
     memset(tabs, '\t', count + 1);
     tabs[count + 1] = '\0';
 
-    printf("%s", root.name.c_str());
-    if(root.children.size() > 0) printf("\n%s\\", tabs);
+    printf("%s(%lu)", root.name.c_str(), root.weight);
+    if (root.children.size() > 0)
+        printf("\n%s\\", tabs);
     for (auto child : root.children)
     {
         printf("\n%s ", tabs);
@@ -87,20 +113,55 @@ void draw_nodes(const unordered_map<string, node> &nodes, const node &root, int 
 
 string puzzle_a(const string &input)
 {
-    unordered_map<string, node> nodes = process(input);
-    node current = nodes.begin()->second;
-    while (current.parent != "")
-    {
-        current = nodes[current.parent];
-    }
-    draw_nodes(nodes, current);
-    // find the root parent
-    return current.name;
+    node_map nodes;
+    node root;
+    process(input, nodes, root);
+    draw_nodes(nodes, root);
+    return root.name;
 }
 
 string puzzle_b(const string &input)
 {
-    return "";
+    node_map nodes;
+    node root;
+    process(input, nodes, root);
+    draw_nodes(nodes, root);
+    cout << endl;
+    try
+    {// find the unbalanced program
+        size_t weight = calc_weights(root, nodes);
+    }
+    catch (std::length_error err)
+    {
+        node bad = nodes[err.what()];
+        unordered_map<size_t, pair<int, node *>> weights;
+        auto it = weights.begin();
+        for (size_t c = 0, curr = 0, size = bad.children.size(); c < size; c++)
+        {
+            curr = calc_weights(nodes[bad.children[c]], nodes);
+            if ((it = weights.find(curr)) == weights.end())
+                weights[curr] = {1, &nodes[bad.children[c]]};
+            else
+                (it->second.first)++;
+        }
+        auto target = weights.begin();
+        auto invalid = target;
+        if (target->second.first == 1)
+            target++;
+        else
+            invalid++;
+        return R"({0} is unbalanced
+    weight:{1}
+     total:{2}
+    target:{3}
+new weight:{4})"_f
+               % invalid->second.second->name
+               % invalid->second.second->weight
+               % invalid->first % target->first
+               % (invalid->second.second->weight + (target->first - invalid->first))
+               % endf;
+    }
+    return "all balanced";
 }
 
 /*
@@ -143,5 +204,16 @@ tknk --- padx - havc
                 xhth
 In this example, tknk is at the bottom of the tower (the bottom program), and is holding up ugml, padx, and fwft. Those programs are, in turn, holding up other programs; in this example, none of those programs are holding up any other programs, and are all the tops of their own towers. (The actual tower balancing in front of you is much larger.)
 Before you're ready to help them, you need to make sure your information is correct. What is the name of the bottom program?
+
+--- Part Two ---
+The programs explain the situation: they can't get down. Rather, they could get down, if they weren't expending all of their energy trying to keep the tower balanced. Apparently, one program has the wrong weight, and until it's fixed, they're stuck here.
+For any program holding a disc, each program standing on that disc forms a sub-tower. Each of those sub-towers are supposed to be the same weight, or the disc itself isn't balanced. The weight of a tower is the sum of the weights of the programs in that tower.
+In the example above, this means that for ugml's disc to be balanced, gyxo, ebii, and jptl must all have the same weight, and they do: 61.
+However, for tknk to be balanced, each of the programs standing on its disc and all programs above it must each match. This means that the following sums must all be the same:
+ugml + (gyxo + ebii + jptl) = 68 + (61 + 61 + 61) = 251
+padx + (pbga + havc + qoyq) = 45 + (66 + 66 + 66) = 243
+fwft + (ktlj + cntj + xhth) = 72 + (57 + 57 + 57) = 243
+As you can see, tknk's disc is unbalanced: ugml's stack is heavier than the other two. Even though the nodes above ugml are balanced, ugml itself is too heavy: it needs to be 8 units lighter for its stack to weigh 243 and keep the towers balanced. If this change were made, its weight would be 60.
+Given that exactly one program is the wrong weight, what would its weight need to be to balance the entire tower?
 
 */
