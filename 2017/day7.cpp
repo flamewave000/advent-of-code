@@ -8,163 +8,164 @@ string puzzle_b(const string &input);
 
 int main(int argc, const char *argv[])
 {
-    config c = proc(argc, argv, 7);
+	config c = proc(argc, argv, 7);
 
-    // cout << "Data: " << c.input;
-    cout << "\n\nResult:" << (c.puzzle == 1 ? puzzle_a(c.input) : puzzle_b(c.input)) << endl;
-    return 0;
+	// cout << "Data: " << c.input;
+	cout << "\n\nResult:" << (c.puzzle == 1 ? puzzle_a(c.input) : puzzle_b(c.input)) << endl;
+	return 0;
 }
 struct node
 {
-    string name;
-    size_t weight;
-    vector<string> children;
-    string parent;
+	string name;
+	size_t weight;
+	vector<string> children;
+	string parent;
 };
 typedef unordered_map<string, node> node_map;
 
 size_t calc_weights(const node &self, node_map &nodes)
 {
-    size_t total = self.weight;
-    size_t norm = ~0;
-    size_t child_weight;
-    for (auto child : self.children)
-    {
-        child_weight = calc_weights(nodes[child], nodes);
-        if (norm == ~0)
-            norm = child_weight;
-        else if (norm != child_weight)
-        {
-            cout << endl
-                 << "norm: {0}, curr: {1}"_f % norm % child_weight << endl;
-            throw std::length_error(self.name);
-            return -1;
-        }
-        total += child_weight;
-    }
-    return total;
+	size_t total = self.weight;
+	size_t norm = ~0;
+	size_t child_weight;
+	for (auto child : self.children)
+	{
+		child_weight = calc_weights(nodes[child], nodes);
+		if (norm == ~0)
+			norm = child_weight;
+		else if (norm != child_weight)
+		{
+			cout << endl
+				 << "norm: {0}, curr: {1}"_f % norm % child_weight << endl;
+			throw std::length_error(self.name);
+			return -1;
+		}
+		total += child_weight;
+	}
+	return total;
 }
 
 node process_line(const std::string &line)
 {
-    vector<string> tokens = split(line, ' ');
-    size_t size = tokens.size();
-    node n;
-    n.name = tokens[0];
-    n.weight = atoi(tokens[1].substr(1, tokens[1].size() - 2).c_str());
-    if (size > 2)
-    {
-        // skip index 2 as it is just '->'
-        for (size_t c = 3, size = tokens.size(); c < size; c++)
-        {
-            if (c == size - 1)
-            {
-                n.children.push_back(tokens[c]);
-            }
-            else
-            {
-                n.children.push_back(tokens[c].substr(0, tokens[c].size() - 1));
-            }
-        }
-    }
-    return std::move(n);
+	vector<string> tokens = split(line, ' ');
+	size_t size = tokens.size();
+	node n;
+	n.name = tokens[0];
+	n.weight = atoi(tokens[1].substr(1, tokens[1].size() - 2).c_str());
+	if (size > 2)
+	{
+		// skip index 2 as it is just '->'
+		for (size_t c = 3, size = tokens.size(); c < size; c++)
+		{
+			if (c == size - 1)
+			{
+				n.children.push_back(tokens[c]);
+			}
+			else
+			{
+				n.children.push_back(tokens[c].substr(0, tokens[c].size() - 1));
+			}
+		}
+	}
+	return std::move(n);
 }
 void process(const string &input, node_map &nodes, node &root)
 {
-    vector<string> lines = split(input, '\n');
-    node n;
-    for (auto line : lines)
-    {
-        n = process_line(line);
-        nodes[n.name] = n;
-    }
-    for (auto pair : nodes)
-    {
-        if (pair.second.children.size() > 0)
-        {
-            for (auto child : pair.second.children)
-            {
-                nodes[child].parent = pair.first;
-            }
-        }
-    }
-    root = nodes.begin()->second;
-    while (root.parent != "")
-    {
-        root = nodes[root.parent];
-    }
+	vector<string> lines = split(input, '\n');
+	node n;
+	for (auto line : lines)
+	{
+		n = process_line(line);
+		nodes[n.name] = n;
+	}
+	for (auto pair : nodes)
+	{
+		if (pair.second.children.size() > 0)
+		{
+			for (auto child : pair.second.children)
+			{
+				nodes[child].parent = pair.first;
+			}
+		}
+	}
+	root = nodes.begin()->second;
+	while (root.parent != "")
+	{
+		root = nodes[root.parent];
+	}
 }
 void draw_nodes(const node_map &nodes, const node &root, int count = 0)
 {
-    char *tabs = new char[count + 2];
-    memset(tabs, '\t', count + 1);
-    tabs[count + 1] = '\0';
+	char *tabs = new char[count + 2];
+	memset(tabs, '\t', count + 1);
+	tabs[count + 1] = '\0';
 
-    printf("%s(%lu)", root.name.c_str(), root.weight);
-    if (root.children.size() > 0)
-        printf("\n%s\\", tabs);
-    for (auto child : root.children)
-    {
-        printf("\n%s ", tabs);
-        draw_nodes(nodes, nodes.find(child)->second, count + 1);
-    }
-    delete[] tabs;
+	printf("%s(%lu)", root.name.c_str(), root.weight);
+	if (root.children.size() > 0)
+		printf("\n%s\\", tabs);
+	for (auto child : root.children)
+	{
+		printf("\n%s ", tabs);
+		draw_nodes(nodes, nodes.find(child)->second, count + 1);
+	}
+	delete[] tabs;
 }
 
 string puzzle_a(const string &input)
 {
-    node_map nodes;
-    node root;
-    process(input, nodes, root);
-    draw_nodes(nodes, root);
-    return root.name;
+	node_map nodes;
+	node root;
+	process(input, nodes, root);
+	draw_nodes(nodes, root);
+	return root.name;
 }
 
 string puzzle_b(const string &input)
 {
-    node_map nodes;
-    node root;
-    process(input, nodes, root);
-    draw_nodes(nodes, root);
-    cout << endl;
-    try
-    {// find the unbalanced program
-        size_t weight = calc_weights(root, nodes);
-    }
-    catch (std::length_error err)
-    {
-        node bad = nodes[err.what()];
-        unordered_map<size_t, pair<int, node *>> weights;
-        auto it = weights.begin();
-        for (size_t c = 0, curr = 0, size = bad.children.size(); c < size; c++)
-        {
-            curr = calc_weights(nodes[bad.children[c]], nodes);
-            if ((it = weights.find(curr)) == weights.end())
-                weights[curr] = {1, &nodes[bad.children[c]]};
-            else
-                (it->second.first)++;
-        }
-        auto target = weights.begin();
-        auto invalid = target;
-        if (target->second.first == 1)
-            target++;
-        else
-            invalid++;
-        return R"({0} is unbalanced
-    weight:{1}
-     total:{2}
-    target:{3}
+	node_map nodes;
+	node root;
+	process(input, nodes, root);
+	draw_nodes(nodes, root);
+	cout << endl;
+	try
+	{// find the unbalanced program
+		size_t weight = calc_weights(root, nodes);
+	}
+	catch (std::length_error err)
+	{
+		node bad = nodes[err.what()];
+		unordered_map<size_t, pair<int, node *>> weights;
+		auto it = weights.begin();
+		for (size_t c = 0, curr = 0, size = bad.children.size(); c < size; c++)
+		{
+			curr = calc_weights(nodes[bad.children[c]], nodes);
+			if ((it = weights.find(curr)) == weights.end())
+				weights[curr] = {1, &nodes[bad.children[c]]};
+			else
+				(it->second.first)++;
+		}
+		auto target = weights.begin();
+		auto invalid = target;
+		if (target->second.first == 1)
+			target++;
+		else
+			invalid++;
+		return R"({0} is unbalanced
+	weight:{1}
+	 total:{2}
+	target:{3}
 new weight:{4})"_f
-               % invalid->second.second->name
-               % invalid->second.second->weight
-               % invalid->first % target->first
-               % (invalid->second.second->weight + (target->first - invalid->first))
-               % endf;
-    }
-    return "all balanced";
+			   % invalid->second.second->name
+			   % invalid->second.second->weight
+			   % invalid->first % target->first
+			   % (invalid->second.second->weight + (target->first - invalid->first))
+			   % endf;
+	}
+	return "all balanced";
 }
 
 /*
+http://adventofcode.com/2017/day/7
 
 --- Day 7: Recursive Circus ---
 Wandering further through the circuits of the computer, you come upon a tower of programs that have gotten themselves into a bit of trouble. A recursive algorithm has gotten out of hand, and now they're balanced precariously in a large tower.

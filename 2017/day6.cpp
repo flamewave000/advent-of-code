@@ -8,90 +8,91 @@ int puzzle_b(const string &input);
 
 int main(int argc, const char *argv[])
 {
-    config c = proc(argc, argv, 6);
+	config c = proc(argc, argv, 6);
 
-    cout << "Data:\t" << c.input << '\n';
-    cout << "\n\nResult:" << (c.puzzle == 1 ? puzzle_a(c.input) : puzzle_b(c.input)) << endl;
-    return 0;
+	cout << "Data:\t" << c.input << '\n';
+	cout << "\n\nResult:" << (c.puzzle == 1 ? puzzle_a(c.input) : puzzle_b(c.input)) << endl;
+	return 0;
 }
 
 union memory {
-    uint8_t blocks[16];
-    uint64_t chunks[2];
-    bool operator==(const memory &other) const
-    {
-        return chunks[0] == other.chunks[0] && chunks[1] == other.chunks[1];
-    }
-    void print()
-    {
-        printf("%lx%lx", chunks[0], chunks[1]);
-    }
-    struct hash
-    {
-        size_t operator()(const memory &key) const
-        {
-            return std::hash<uint64_t>()(key.chunks[0]) ^ std::hash<uint64_t>()(key.chunks[1]);
-        }
-    };
+	uint8_t blocks[16];
+	uint64_t chunks[2];
+	bool operator==(const memory &other) const
+	{
+		return chunks[0] == other.chunks[0] && chunks[1] == other.chunks[1];
+	}
+	void print()
+	{
+		printf("%lx%lx", chunks[0], chunks[1]);
+	}
+	struct hash
+	{
+		size_t operator()(const memory &key) const
+		{
+			return std::hash<uint64_t>()(key.chunks[0]) ^ std::hash<uint64_t>()(key.chunks[1]);
+		}
+	};
 };
 
 memory redistribute(const string &input, function<void(memory &)> insert, function<bool(memory &)> unique)
 {
-    memory mem = {UINT64_C(0), UINT64_C(0)};
-    auto tokens = split(input, '\t');
-    size_t c = 0;
-    for (; c < 16; c++)
-    {
-        mem.blocks[c] = atoi(tokens[c].c_str());
-    }
-    size_t index = 0;
-    uint8_t value = UINT64_C(0);
-    do
-    {
-        printf("\rmem: ");
-        mem.print();
-        fflush(stdout);
-        insert(mem);
+	memory mem = {UINT64_C(0), UINT64_C(0)};
+	auto tokens = split(input, '\t');
+	size_t c = 0;
+	for (; c < 16; c++)
+	{
+		mem.blocks[c] = atoi(tokens[c].c_str());
+	}
+	size_t index = 0;
+	uint8_t value = UINT64_C(0);
+	do
+	{
+		printf("\rmem: ");
+		mem.print();
+		fflush(stdout);
+		insert(mem);
 
-        index = 0;
-        for (c = 0; c < 16; c++)
-        {
-            if (mem.blocks[c] > mem.blocks[index])
-                index = c;
-        }
-        value = mem.blocks[index];
-        mem.blocks[index] = 0;
-        for (; value > 0; value--)
-        {
-            index = (index + 1) % 16;
-            mem.blocks[index]++;
-        }
-    } while (unique(mem));
-    return std::move(mem);
+		index = 0;
+		for (c = 0; c < 16; c++)
+		{
+			if (mem.blocks[c] > mem.blocks[index])
+				index = c;
+		}
+		value = mem.blocks[index];
+		mem.blocks[index] = 0;
+		for (; value > 0; value--)
+		{
+			index = (index + 1) % 16;
+			mem.blocks[index]++;
+		}
+	} while (unique(mem));
+	return std::move(mem);
 }
 
 int puzzle_a(const string &input)
 {
-    unordered_set<memory, memory::hash> set;
-    auto end = set.end();
-    redistribute(input,
-                 [&set](auto mem) { set.insert(mem); },
-                 [&set, &end](auto mem) -> bool { return set.find(mem) == end; });
-    return set.size();
+	unordered_set<memory, memory::hash> set;
+	auto end = set.end();
+	redistribute(input,
+				 [&set](auto mem) { set.insert(mem); },
+				 [&set, &end](auto mem) -> bool { return set.find(mem) == end; });
+	return set.size();
 }
 
 int puzzle_b(const string &input)
 {
-    unordered_map<memory, size_t, memory::hash> map;
-    auto end = map.end();
-    size_t index = 0;
-    memory final = redistribute(input,
-                 [&map, &index](auto mem) { map[mem] = index++; },
-                 [&map, &end](auto mem) -> bool { return map.find(mem) == end; });
-    return map.size() - map[final];
+	unordered_map<memory, size_t, memory::hash> map;
+	auto end = map.end();
+	size_t index = 0;
+	memory final = redistribute(input,
+				 [&map, &index](auto mem) { map[mem] = index++; },
+				 [&map, &end](auto mem) -> bool { return map.find(mem) == end; });
+	return map.size() - map[final];
 }
 
 /*
+http://adventofcode.com/2017/day/6
 
 --- Day 6: Memory Reallocation ---
 A debugger program here is having an issue: it is trying to repair a memory reallocation routine, but it keeps getting stuck in an infinite loop.

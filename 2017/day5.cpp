@@ -8,50 +8,51 @@ int puzzle_b(const string &input);
 
 int main(int argc, const char *argv[])
 {
-    config c = proc(argc, argv, 5);
+	config c = proc(argc, argv, 5);
 
-    cout << "Result:" << (c.puzzle == 1 ? puzzle_a(c.input) : puzzle_b(c.input)) << endl;
-    return 0;
+	cout << "Result:" << (c.puzzle == 1 ? puzzle_a(c.input) : puzzle_b(c.input)) << endl;
+	return 0;
 }
 
 int process(const string &input, function<void(int &)> process_num)
 {
-    vector<int> nums;
-    istringstream iss(input);
-    int num = 0;
-    while (!iss.eof())
-    {
-        iss >> num;
-        nums.push_back(num);
-    }
+	vector<int> nums;
+	istringstream iss(input);
+	int num = 0;
+	while (!iss.eof())
+	{
+		iss >> num;
+		nums.push_back(num);
+	}
 
-    size_t cur = 0, size = nums.size(), jumps = 0, next = 0;
-    cout << "numbers: " << size << '\n';
-    while (cur >= 0 && cur < size)
-    {
-        next = cur + nums[cur];
-        process_num(nums[cur]);
-        jumps++;
-        cur = next;
-    }
-    return jumps;
+	size_t cur = 0, size = nums.size(), jumps = 0, next = 0;
+	cout << "numbers: " << size << '\n';
+	while (cur >= 0 && cur < size)
+	{
+		next = cur + nums[cur];
+		process_num(nums[cur]);
+		jumps++;
+		cur = next;
+	}
+	return jumps;
 }
 
 int puzzle_a(const string &input)
 {
-    return process(input, [](int& num) {
-        num++;
-    });
+	return process(input, [](int& num) {
+		num++;
+	});
 }
 
 int puzzle_b(const string &input)
 {
-    return process(input, [](int& num) {
-        num += num > 2 ? -1 : 1;
-    });
+	return process(input, [](int& num) {
+		num += num > 2 ? -1 : 1;
+	});
 }
 
 /*
+http://adventofcode.com/2017/day/5
 
 --- Day 5: A Maze of Twisty Trampolines, All Alike ---
 An urgent interrupt arrives from the CPU: it's trapped in a maze of jump instructions, and it would like assistance from any programs with spare cycles to help find the exit.

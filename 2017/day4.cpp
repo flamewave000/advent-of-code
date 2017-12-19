@@ -8,70 +8,71 @@ void puzzle_b(const string &input);
 
 int main(int argc, const char *argv[])
 {
-    config c = proc(argc, argv, 4);
+	config c = proc(argc, argv, 4);
 
-    if (c.puzzle == 1)
-        puzzle_a(c.input);
-    else
-        puzzle_b(c.input);
-    return 0;
+	if (c.puzzle == 1)
+		puzzle_a(c.input);
+	else
+		puzzle_b(c.input);
+	return 0;
 }
 
 void process(const string &input, function<bool(const unordered_set<string> &, const vector<string> &)> validate)
 {
-    vector<string> lines = split(input, '\n');
-    int good = 0;
-    int bad = 0;
-    unordered_set<string> set;
-    cout << "lines: " << lines.size() << '\n';
-    for (auto line : lines)
-    {
-        auto words = split(line, ' ');
-        if (words.size() <= 1)
-        {
-            bad++;
-            continue;
-        }
-        set.clear();
-        for (auto word : words)
-        {
-            if (set.find(word) != set.end())
-                break;
-            set.insert(word);
-        }
-        if (validate(set, words))
-            good++;
-        else
-            bad++;
-    }
-    cout << "  bad: " << bad << '\n';
-    cout << " good: " << good << endl;
+	vector<string> lines = split(input, '\n');
+	int good = 0;
+	int bad = 0;
+	unordered_set<string> set;
+	cout << "lines: " << lines.size() << '\n';
+	for (auto line : lines)
+	{
+		auto words = split(line, ' ');
+		if (words.size() <= 1)
+		{
+			bad++;
+			continue;
+		}
+		set.clear();
+		for (auto word : words)
+		{
+			if (set.find(word) != set.end())
+				break;
+			set.insert(word);
+		}
+		if (validate(set, words))
+			good++;
+		else
+			bad++;
+	}
+	cout << "  bad: " << bad << '\n';
+	cout << " good: " << good << endl;
 }
 
 void puzzle_a(const string &input)
 {
-    process(input, [](auto set, auto words) -> bool {
-        return set.size() == words.size();
-    });
+	process(input, [](auto set, auto words) -> bool {
+		return set.size() == words.size();
+	});
 }
 
 void puzzle_b(const string &input)
 {
-    process(input, [](auto set, auto words) -> bool {
-        if (set.size() != words.size())
-            return false;
-        for(size_t c = 0, size = words.size(); c < size; c++) {
-            std::sort(words[c].begin(), words[c].end());
-            for(int i = c - 1; i >= 0; i--) {
-                if(words[c] == words[i])
-                    return false;
-            }
-        }
-        return true;
-    });
+	process(input, [](auto set, auto words) -> bool {
+		if (set.size() != words.size())
+			return false;
+		for(size_t c = 0, size = words.size(); c < size; c++) {
+			std::sort(words[c].begin(), words[c].end());
+			for(int i = c - 1; i >= 0; i--) {
+				if(words[c] == words[i])
+					return false;
+			}
+		}
+		return true;
+	});
 }
 
 /*
+http://adventofcode.com/2017/day/4
 
 --- Day 4: High-Entropy Passphrases ---
 A new system policy has been put in place that requires all accounts to use a passphrase instead of simply a password. A passphrase consists of a series of words (lowercase letters) separated by spaces.
