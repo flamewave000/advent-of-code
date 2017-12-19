@@ -17,6 +17,8 @@
 #include <functional>
 #include <algorithm>
 #include "../stringx/include/stringx.hpp"
+#define LINQ_USE_MACROS
+#include "../linq/lib/linq.h"
 
 std::string get_file(const char *filename)
 {

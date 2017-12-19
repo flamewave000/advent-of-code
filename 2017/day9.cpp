@@ -8,51 +8,63 @@ int puzzle_b(const string &input);
 
 int main(int argc, const char *argv[])
 {
-    config c = proc(argc, argv, 9);
+	config c = proc(argc, argv, 9);
 
-    cout << "stream size: {0}\nResult: {1}"_f
-         % c.input.size()
-         % (c.puzzle == 1 ? puzzle_a(c.input) : puzzle_b(c.input))
-         << endl;
-    return 0;
+	cout << "stream size: {0}\nResult: {1}"_f
+		 % c.input.size()
+		 % (c.puzzle == 1 ? puzzle_a(c.input) : puzzle_b(c.input))
+		 << endl;
+	return 0;
 }
 
 int puzzle_a(const string &input)
 {
-    bool garbage_collecting = false;
-    int stack = 0;
-    int score = 0;
-    for (size_t c = 0, size = input.size(); c < size; c++)
-    {
-        switch (input[c])
-        {
-        case '{':
-            if (garbage_collecting)
-                continue;
-            stack++;
-            break;
-        case '}':
-            if (garbage_collecting)
-                continue;
-            score += stack;
-            stack--;
-            break;
-        case '<':
-            garbage_collecting = true;
-            break;
-        case '>':
-            garbage_collecting = false;
-            break;
-        case '!':
-            c++;
-            break;
-        }
-    }
-    return score;
+	bool garbage_collecting = false;
+	int stack = 0;
+	int score = 0;
+	for (size_t c = 0, size = input.size(); c < size; c++)
+	{
+		switch (input[c])
+		{
+		case '{':
+			if (garbage_collecting) continue;
+			stack++;
+			break;
+		case '}':
+			if (garbage_collecting) continue;
+			score += stack;
+			stack--;
+			break;
+		case '<': garbage_collecting = true; break;
+		case '>': garbage_collecting = false; break;
+		case '!': c++; break;
+		}
+	}
+	return score;
 }
 
 int puzzle_b(const string &input)
 {
+	bool garbage_collecting = false;
+	int garbage_count = 0;
+	for (size_t c = 0, size = input.size(); c < size; c++)
+	{
+		switch (input[c])
+		{
+		case '>': garbage_collecting = false; break;
+		case '!': c++; break;
+		case '<':
+			if (!garbage_collecting)
+			{
+				garbage_collecting = true;
+				continue;
+			}
+		default:
+			if (garbage_collecting) garbage_count++;
+			break;
+		}
+	}
+	return garbage_count;
 }
 
 /*
@@ -90,5 +102,17 @@ Your goal is to find the total score for all groups in your input. Each group is
 - {{<!!>},{<!!>},{<!!>},{<!!>}}, score of 1 + 2 + 2 + 2 + 2 = 9.
 - {{<a!>},{<a!>},{<a!>},{<ab>}}, score of 1 + 2 = 3.
 What is the total score for all groups in your input?
+
+--- Part Two ---
+Now, you're ready to remove the garbage.
+To prove you've removed it, you need to count all of the characters within the garbage. The leading and trailing < and > don't count, nor do any canceled characters or the ! doing the canceling.
+- <>, 0 characters.
+- <random characters>, 17 characters.
+- <<<<>, 3 characters.
+- <{!>}>, 2 characters.
+- <!!>, 0 characters.
+- <!!!>>, 0 characters.
+- <{o"i!a,<{i<a>, 10 characters.
+How many non-canceled characters are within the garbage in your puzzle input?
 
 */

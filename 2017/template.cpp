@@ -3,8 +3,8 @@
 using namespace std;
 using namespace strx;
 
-int puzzle_a(const string& input);
-int puzzle_b(const string& input);
+int puzzle_a(const string &input);
+int puzzle_b(const string &input);
 
 int main(int argc, const char *argv[])
 {
@@ -15,12 +15,13 @@ int main(int argc, const char *argv[])
     return 0;
 }
 
-int puzzle_a(const string& input) {
+int puzzle_a(const string &input)
+{
 }
 
-int puzzle_b(const string& input) {
+int puzzle_b(const string &input)
+{
 }
-
 
 /*
 

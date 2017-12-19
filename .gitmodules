@@ -1,3 +1,6 @@
 [submodule "stringx"]
 	path = stringx
 	url = git@github.com:flamewave000/stringx.git
+[submodule "linq"]
+	path = linq
+	url = git@github.com:flamewave000/flame-linq.git
