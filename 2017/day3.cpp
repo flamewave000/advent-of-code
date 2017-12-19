@@ -141,6 +141,8 @@ int main(int argc, const char *argv[])
 
 int puzzle_a(const string &input)
 {
+    // The pattern of the sprial follows the equation `cell_count = 1 + !(n * 8)`
+    // This means every ring's size is `n * 8` and the total number of cells are a simple factorial
     int sum = 1;
     int locale = atoi(input.c_str());
     int curr = 0;
