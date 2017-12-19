@@ -85,7 +85,7 @@ inline instruction process_line(const string &line)
         tokens[0],
         tokens[1] == "inc",
         atoi(tokens[2].c_str()),
-        // skip tokens[3], it is simple the word `if`
+        // skip tokens[3], it is simply the word `if`
         {tokens[4],
          str2comp(tokens[5]),
          atoi(tokens[6].c_str())}};
@@ -107,6 +107,13 @@ inline unordered_map<string, int>::iterator get_register(unordered_map<string, i
     return it != registers.end() ? it : registers.insert(make_pair(name, 0)).first;
 }
 
+void print_registers(const unordered_map<string, int> &registers) {
+    for (auto reg : registers)
+    {
+        cout << "register: {0} \tvalue: {1}"_f % reg.first % reg.second << endl;
+    }
+}
+
 int puzzle_a(const string &input)
 {
     unordered_map<string, int> registers;
@@ -122,18 +129,36 @@ int puzzle_a(const string &input)
         }
     });
 
-    int heighest = INT32_MIN;
+    int highest = INT32_MIN;
     for (auto reg : registers)
     {
-        cout << "register: {0} \tvalue: {1}"_f % reg.first % reg.second << endl;
-        if (reg.second > heighest)
-            heighest = reg.second;
+        if (reg.second > highest)
+            highest = reg.second;
     }
-    return heighest;
+    print_registers(registers);
+    return highest;
 }
 
 int puzzle_b(const string &input)
 {
+    unordered_map<string, int> registers;
+    int highest = INT32_MIN;
+    process(input, [&registers, &highest](const instruction &inst) {
+        auto lvalue = get_register(registers, inst.cond.lvalue);
+        if (inst.cond.compare(lvalue->second))
+        {
+            auto reg = get_register(registers, inst.reg_name);
+            if (inst.increment)
+                reg->second += inst.amount;
+            else
+                reg->second -= inst.amount;
+            if(reg->second > highest) {
+                highest = reg->second;
+            }
+        }
+    });
+    print_registers(registers);
+    return highest;
 }
 
 /*
@@ -153,5 +178,8 @@ c is increased by -20 (to -10) because c is equal to 10.
 After this process, the largest value in any register is 1.
 You might also encounter <= (less than or equal to) or != (not equal to). However, the CPU doesn't have the bandwidth to tell you what all the registers are named, and leaves that to you to determine.
 What is the largest value in any register after completing the instructions in your puzzle input?
+
+--- Part Two ---
+To be safe, the CPU also needs to know the highest value held in any register during this process so that it can decide how much memory to allocate to these operations. For example, in the above instructions, the highest value ever held was 10 (in register c after the third instruction was evaluated).
 
 */
