@@ -5,7 +5,7 @@ using namespace std;
 using namespace strx;
 using namespace linq;
 
-int puzzle_a(const string &input);
+inline int puzzle_a(const string &input);
 int puzzle_b(const string &input);
 
 int main(int argc, const char *argv[])
@@ -16,22 +16,11 @@ int main(int argc, const char *argv[])
 	return 0;
 }
 
-enum class direction : unsigned char
-{
-	n,
-	ne,
-	se,
-	s,
-	sw,
-	nw
-};
-
 inline int distance_to_centre(int x, int y, int z) {
 	return (abs(x) + abs(y) + abs(z)) >> 1;
 }
 
-int puzzle_a(const string &input)
-{
+int walk(const string &input, function<void(int,int,int)> *step_handler = nullptr) {
 	auto steps = split(input, ',');
 	int x = 0, y = 0, z = 0;
 	cout << "Step Count: " << steps.size() << endl;
@@ -59,12 +48,27 @@ int puzzle_a(const string &input)
 			z++;
 			y--;
 		}
+		if (step_handler != nullptr)
+			step_handler->operator()(x, y, z);
 	}
 	return distance_to_centre(x, y, z);
 }
 
+inline int puzzle_a(const string &input)
+{
+	return walk(input);
+}
+
 int puzzle_b(const string &input)
 {
+	int max_distance = 0;
+	function<void(int, int, int)> step([&max_distance](int x, int y, int z) -> void {
+		int distance = distance_to_centre(x, y, z);
+		if (max_distance < distance)
+			max_distance = distance;
+	});
+	walk(input, &step);
+	return max_distance;
 }
 
 /*
@@ -88,5 +92,8 @@ For example:
 - ne,ne,sw,sw is 0 steps away (back where you started).
 - ne,ne,s,s is 2 steps away (se,se).
 - se,sw,se,sw,sw is 3 steps away (s,s,sw).
+
+--- Part Two ---
+How many steps away is the furthest he ever got from his starting position?
 
 */
