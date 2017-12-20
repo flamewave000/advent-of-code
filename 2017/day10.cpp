@@ -4,10 +4,12 @@ using namespace std;
 using namespace strx;
 using namespace linq;
 
-int puzzle_a(const string &input);
-int puzzle_b(const string &input);
+string puzzle_a(const string &input);
+string puzzle_b(const string &input);
 
 const int RING_SIZE = 256;
+const int SPARSE_HASH_ITERATION_COUNT = 64;
+const char HEX[17] = "0123456789abcdef";
 
 int main(int argc, const char *argv[])
 {
@@ -18,13 +20,14 @@ int main(int argc, const char *argv[])
 	return 0;
 }
 
-void reverse(int ring[RING_SIZE], int index, int length)
+void reverse(byte ring[RING_SIZE], int index, byte length)
 {
-	if (length == 1)
+	if (length == 1_b)
 		return;
 	// half length, ignoring odd numbers as their middle number does not change
-	int halfLength = length >> 1;
-	int temp = 0, a = 0, b = 0;
+	byte halfLength = length >> 1;
+	byte temp = 0_b;
+	int a = 0, b = 0;
 	for (int c = 0; c < halfLength; c++)
 	{
 		a = (index + c) % RING_SIZE;
@@ -34,38 +37,77 @@ void reverse(int ring[RING_SIZE], int index, int length)
 		ring[b] = temp;
 	}
 }
-void print_ring(int ring[RING_SIZE])
+void print_ring(byte ring[RING_SIZE])
 {
 	for (int c = 0, index = 0; c < 16; c++)
 	{
 		index = c << 4;
 		printf("%3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d\n",
-			 ring[index], ring[index + 1], ring[index + 2], ring[index + 3],
-			 ring[index + 4], ring[index + 5], ring[index + 6], ring[index + 7],
-			 ring[index + 8], ring[index + 9], ring[index + 10], ring[index + 11],
-			 ring[index + 12], ring[index + 13], ring[index + 14], ring[index + 15]);
+			   ring[index], ring[index + 1], ring[index + 2], ring[index + 3],
+			   ring[index + 4], ring[index + 5], ring[index + 6], ring[index + 7],
+			   ring[index + 8], ring[index + 9], ring[index + 10], ring[index + 11],
+			   ring[index + 12], ring[index + 13], ring[index + 14], ring[index + 15]);
 	}
 }
 
-int puzzle_a(const string &input)
+string puzzle_a(const string &input)
 {
-	auto lengths = from(split(input, ',')).select<int>([](auto item) -> int { return atoi(item.c_str()); });
+	auto lengths = from(split(input, ',')).select<byte>([](auto item) -> byte { return (byte)atoi(item.c_str()); });
 	int index = 0, skip = 0;
-	int ring[RING_SIZE];
+	byte ring[RING_SIZE];
 	for (int c = 0; c < RING_SIZE; c++)
-		ring[c] = c;
-	for (int length : lengths)
+		ring[c] = (byte)c;
+	for (byte length : lengths)
 	{
 		reverse(ring, index, length);
-		index = (index + length + skip) % RING_SIZE;
+		index = (index + (int)length + skip) % RING_SIZE;
 		skip++;
 	}
 	print_ring(ring);
-	return ring[0] * ring[1];
+	return spec("%d", ((int)ring[0] * (int)ring[1]));
 }
 
-int puzzle_b(const string &input)
+string puzzle_b(const string &input)
 {
+	auto lengths = from(input.c_str(), input.size()).select<byte>([](auto item) -> byte { return (byte)item; });
+	lengths.push_back((byte)17); // DC1
+	lengths.push_back((byte)31); // US
+	lengths.push_back((byte)73); // I
+	lengths.push_back((byte)47); // /
+	lengths.push_back((byte)23); // ETB
+	byte ring[RING_SIZE];
+	for (int c = 0; c < RING_SIZE; c++)
+		ring[c] = (byte)c;
+	// Generate the sparse hash by iterating the lengths SPARSE_HASH_ITERATION_COUNT times
+	for (int iterations = 0, index = 0, skip = 0; iterations < SPARSE_HASH_ITERATION_COUNT; iterations++)
+	{
+		// Perform ring twists based on the list of lengths
+		for (size_t c = 0, size = lengths.size(); c < size; c++, skip++)
+		{
+			// Perform twist
+			reverse(ring, index, lengths[c]);
+			// Update index position
+			index = (index + (int)lengths[c] + skip) % RING_SIZE;
+		}
+	}
+	// Generate dense hash
+	char result[33] = "00000000000000000000000000000000";
+	byte part_hash;
+	for (int section = 0, quarter_size = RING_SIZE >> 4, offset = 0, part;
+		 section < quarter_size; section++)
+	{
+		offset = section * quarter_size;
+		part_hash = ring[offset];
+		for (part = 1; part < quarter_size; part++)
+		{
+			part_hash ^= ring[offset + part];
+		}
+		result[(section << 1)] = HEX[((int)part_hash >> 4) & 0xF];
+		result[(section << 1) + 1] = HEX[(int)part_hash & 0xF];
+	}
+
+	print_ring(ring);
+	return result;
 }
 
 /*
@@ -99,5 +141,22 @@ Suppose we instead only had a circular list containing five elements, 0, 1, 2, 3
 - Finally, the current position moves forward by 8: 3 4 2 1 [0]. The skip size increases to 4.
 In this example, the first two numbers in the list end up being 3 and 4; to check the process, you can multiply them together to produce 12.
 However, you should instead use the standard list size of 256 (with values 0 to 255) and the sequence of lengths in your puzzle input. Once this process is complete, what is the result of multiplying the first two numbers in the list?
+
+--- Part Two ---
+The logic you've constructed forms a single round of the Knot Hash algorithm; running the full thing requires many of these rounds. Some input and output processing is also required.
+First, from now on, your input should be taken not as a list of numbers, but as a string of bytes instead. Unless otherwise specified, convert characters to bytes using their ASCII codes. This will allow you to handle arbitrary ASCII strings, and it also ensures that your input lengths are never larger than 255. For example, if you are given 1,2,3, you should convert it to the ASCII codes for each character: 49,44,50,44,51.
+Once you have determined the sequence of lengths to use, add the following lengths to the end of the sequence: 17, 31, 73, 47, 23. For example, if you are given 1,2,3, your final sequence of lengths should be 49,44,50,44,51,17,31,73,47,23 (the ASCII codes from the input string combined with the standard length suffix values).
+Second, instead of merely running one round like you did above, run a total of 64 rounds, using the same length sequence in each round. The current position and skip size should be preserved between rounds. For example, if the previous example was your first round, you would start your second round with the same length sequence (3, 4, 1, 5, 17, 31, 73, 47, 23, now assuming they came from ASCII codes and include the suffix), but start with the previous round's current position (4) and skip size (4).
+Once the rounds are complete, you will be left with the numbers from 0 to 255 in some order, called the sparse hash. Your next task is to reduce these to a list of only 16 numbers called the dense hash. To do this, use numeric bitwise XOR to combine each consecutive block of 16 numbers in the sparse hash (there are 16 such blocks in a list of 256 numbers). So, the first element in the dense hash is the first sixteen elements of the sparse hash XOR'd together, the second element in the dense hash is the second sixteen elements of the sparse hash XOR'd together, etc.
+For example, if the first sixteen elements of your sparse hash are as shown below, and the XOR operator is ^, you would calculate the first output number like this:
+	65 ^ 27 ^ 9 ^ 1 ^ 4 ^ 3 ^ 40 ^ 50 ^ 91 ^ 7 ^ 6 ^ 0 ^ 2 ^ 5 ^ 68 ^ 22 = 64
+Perform this operation on each of the sixteen blocks of sixteen numbers in your sparse hash to determine the sixteen numbers in your dense hash.
+Finally, the standard way to represent a Knot Hash is as a single hexadecimal string; the final output is the dense hash in hexadecimal notation. Because each number in your dense hash will be between 0 and 255 (inclusive), always represent each number as two hexadecimal digits (including a leading zero as necessary). So, if your first three numbers are 64, 7, 255, they correspond to the hexadecimal numbers 40, 07, ff, and so the first six characters of the hash would be 4007ff. Because every Knot Hash is sixteen such numbers, the hexadecimal representation is always 32 hexadecimal digits (0-f) long. 
+Here are some example hashes:
+- The empty string becomes a2582a3a0e66e6e86e3812dcb672a272.
+- AoC 2017 becomes 33efeb34ea91902bb2f59c9920caa6cd.
+- 1,2,3 becomes 3efbe78a8d82f29979031a4aa0b16a9d.
+- 1,2,4 becomes 63960835bcdc130f0b66d7ff4f6a5a8e.
+Treating your puzzle input as a string of ASCII characters, what is the Knot Hash of your puzzle input? Ignore any leading or trailing whitespace you might encounter.
 
 */
