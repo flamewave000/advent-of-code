@@ -2,6 +2,7 @@
 
 using namespace std;
 using namespace strx;
+using namespace linq;
 
 int puzzle_a(const string &input);
 int puzzle_b(const string &input);
@@ -24,6 +25,7 @@ int puzzle_b(const string &input)
 }
 
 /*
+http://adventofcode.com/2017/day/
 
 
 

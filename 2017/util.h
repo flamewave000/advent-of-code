@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <functional>
 #include <algorithm>
+#include <math.h>
 #include "byte.hpp"
 #include "../stringx/include/stringx.hpp"
 #include "../linq/lib/linq.h"
