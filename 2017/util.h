@@ -18,8 +18,9 @@
 #include <algorithm>
 #include <math.h>
 #include "byte.hpp"
+#include "c_array.hpp"
 #include "../stringx/include/stringx.hpp"
-#include "../linq/lib/linq.h"
+#include "../linq/include/linq.hpp"
 
 std::string get_file(const char *filename)
 {

@@ -11,8 +11,8 @@ int main(int argc, const char *argv[])
 {
 	config c = proc(argc, argv, ##);
 
-	cout << "Data: " << c.input;
-	cout << "\n\nResult:" << (c.puzzle == 1 ? puzzle_a(c.input) : puzzle_b(c.input)) << endl;
+	cout << "Data: " << c.input << endl;
+	cout << "\nResult:" << (c.puzzle == 1 ? puzzle_a(c.input) : puzzle_b(c.input)) << endl;
 	return 0;
 }
 
