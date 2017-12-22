@@ -37,8 +37,9 @@ struct config
 	std::string input;
 };
 
-config proc(int argc, const char **argv, int day)
+config proc(int argc, const char **argv, std::string file_name)
 {
+	std::string day = strx::split(file_name, '.')[0];
 	if (argc != 2 && argc != 4)
 		exit(-1);
 	std::string puzzle = argv[1];
@@ -46,7 +47,7 @@ config proc(int argc, const char **argv, int day)
 		exit(-1);
 	int p = puzzle[1] - '0';
 	if (argc == 2)
-		return {p, get_file(("data/day{0}.txt"_f % day % strx::endf).c_str())};
+		return {p, get_file(("data/{0}.txt"_f % day % strx::endf).c_str())};
 
 	std::string dataFlag = argv[2];
 	return {p,
@@ -54,7 +55,7 @@ config proc(int argc, const char **argv, int day)
 				? std::string(argv[3])
 				: dataFlag == "-f"
 					  ? get_file(argv[3])
-					  : get_file(("data/day{0}.txt"_f % day % strx::endf).c_str())};
+					  : get_file(("data/{0}.txt"_f % day % strx::endf).c_str())};
 }
 
 #endif

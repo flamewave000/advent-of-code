@@ -8,7 +8,7 @@ int puzzle_b(const string &input);
 
 int main(int argc, const char *argv[])
 {
-	config c = proc(argc, argv, 6);
+	config c = proc(argc, argv, __FILE__);
 
 	cout << "Data:\t" << c.input << '\n';
 	cout << "\n\nResult:" << (c.puzzle == 1 ? puzzle_a(c.input) : puzzle_b(c.input)) << endl;

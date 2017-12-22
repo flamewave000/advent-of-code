@@ -13,7 +13,7 @@ const char HEX[17] = "0123456789abcdef";
 
 int main(int argc, const char *argv[])
 {
-	config c = proc(argc, argv, 10);
+	config c = proc(argc, argv, __FILE__);
 
 	cout << "Data: {0}\n\n"_f % c.input;
 	cout << "\nResult:" << (c.puzzle == 1 ? puzzle_a(c.input) : puzzle_b(c.input)) << endl;

@@ -8,7 +8,7 @@ void puzzle_b(const string &input);
 
 int main(int argc, const char *argv[])
 {
-	config c = proc(argc, argv, 4);
+	config c = proc(argc, argv, __FILE__);
 
 	if (c.puzzle == 1)
 		puzzle_a(c.input);

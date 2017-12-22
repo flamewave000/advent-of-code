@@ -8,7 +8,7 @@ int puzzle_b(const string &input);
 
 int main(int argc, const char *argv[])
 {
-	config c = proc(argc, argv, 9);
+	config c = proc(argc, argv, __FILE__);
 
 	cout << "stream size: {0}\nResult: {1}"_f
 		 % c.input.size()
