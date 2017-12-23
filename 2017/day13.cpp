@@ -11,39 +11,67 @@ int main(int argc, const char *argv[])
 {
 	config c = proc(argc, argv, __FILE__);
 
+	// cout << c.input << endl;
 	cout << "\nResult:" << (c.puzzle == 1 ? puzzle_a(c.input) : puzzle_b(c.input)) << endl;
 	return 0;
 }
 
+void process(const string &item, int &layer, int &length)
+{
+	size_t index = item.find_first_of(':');
+	layer = atoi(item.substr(0, index).c_str());
+	length = atoi(item.substr(index + 2).c_str());
+}
+
+inline bool will_collide(const int &layer, const int &length, const int &delay = 0)
+{
+	// calculates the position of the scanner on any length and any time and layer
+	// if the position is 0, the program will be caught
+	return ((layer + delay) % ((length - 1) * 2)) == 0;
+}
+
 int puzzle_a(const string &input)
 {
-	size_t index;
-	uint8_t layer;
-	uint8_t length;
+	int layer;
+	int length;
 	return from(split(input, '\n'))
-		.sum<int>([&layer, &index, &length](string item) -> int {
-			index = item.find_first_of(':');
-			layer = atoi(item.substr(0, index).c_str());
-			length = atoi(item.substr(index + 2).c_str());
-			bool odd_layer = (layer / length) & 0x01;
-			int offset = layer < length ? layer % length : ((layer - 1) % (length - 1)) + 1;
-			cout << "layer:{0} length:{1} index:{2}"_f % layer % length % offset << endl;
-			if (odd_layer)
+		.sum<int>([&layer, &length](string item) -> int {
+			process(item, layer, length);
+			if (will_collide(layer, length, 0))
 			{
-				if (offset != length - 1)
-					return 0;
+				cout << "Caught: {0} * {1}"_f % layer % length << endl;
+				return layer * length;
 			}
 			else
-			{
-				if (offset > 0)
-					return 0;
-			}
-			cout << "Caught: {0} * {1}"_f % layer % length << endl;
-			return layer * length;
+				return 0;
 		});
 }
 int puzzle_b(const string &input)
 {
+	int layer;
+	int length;
+	int delay = 0;
+	auto layers = from(split(input, '\n'))
+					  .select<pair<int, int>>([&layer, &length](auto item) -> pair<int, int> {
+						  process(item, layer, length);
+						  return make_pair(layer, length);
+					  });
+	bool colliding = true;
+	while (colliding)
+	{
+		colliding = false;
+		if(!(delay % 1000)) cout << "delay: " << delay << endl;
+		for (auto layer : layers)
+		{
+			if (will_collide(layer.first, layer.second, delay))
+			{
+				colliding = true;
+				delay++;
+				break;
+			}
+		}
+	}
+	return delay;
 }
 
 /*
@@ -199,5 +227,115 @@ Your plan is to hitch a ride on a packet about to move through the firewall. The
 In this situation, you are caught in layers 0 and 6, because your packet entered the layer when its scanner was at the top when you entered it. You are not caught in layer 1, since the scanner moved into the top of the layer once you were already there.
 The severity of getting caught on a layer is equal to its depth multiplied by its range. (Ignore layers in which you do not get caught.) The severity of the whole trip is the sum of these values. In the example above, the trip severity is 0*3 + 6*4 = 24.
 Given the details of the firewall you've recorded, if you leave immediately, what is the severity of your whole trip?
+
+--- Part Two ---
+Now, you need to pass through the firewall without being caught - easier said than done.
+You can't control the speed of the packet, but you can delay it any number of picoseconds. For each picosecond you delay the packet before beginning your trip, all security scanners move one step. You're not in the firewall during this time; you don't enter layer 0 until you stop delaying the packet.
+In the example above, if you delay 10 picoseconds (picoseconds 0 - 9), you won't get caught:
+State after delaying:
+	 0   1   2   3   4   5   6
+	[ ] [S] ... ... [ ] ... [ ]
+	[ ] [ ]         [ ]     [ ]
+	[S]             [S]     [S]
+	                [ ]     [ ]
+
+	Picosecond 10:
+	 0   1   2   3   4   5   6
+	( ) [S] ... ... [ ] ... [ ]
+	[ ] [ ]         [ ]     [ ]
+	[S]             [S]     [S]
+	                [ ]     [ ]
+
+	 0   1   2   3   4   5   6
+	( ) [ ] ... ... [ ] ... [ ]
+	[S] [S]         [S]     [S]
+	[ ]             [ ]     [ ]
+	                [ ]     [ ]
+
+
+	Picosecond 11:
+	 0   1   2   3   4   5   6
+	[ ] ( ) ... ... [ ] ... [ ]
+	[S] [S]         [S]     [S]
+	[ ]             [ ]     [ ]
+	                [ ]     [ ]
+
+	 0   1   2   3   4   5   6
+	[S] (S) ... ... [S] ... [S]
+	[ ] [ ]         [ ]     [ ]
+	[ ]             [ ]     [ ]
+	                [ ]     [ ]
+
+
+	Picosecond 12:
+	 0   1   2   3   4   5   6
+	[S] [S] (.) ... [S] ... [S]
+	[ ] [ ]         [ ]     [ ]
+	[ ]             [ ]     [ ]
+	                [ ]     [ ]
+
+	 0   1   2   3   4   5   6
+	[ ] [ ] (.) ... [ ] ... [ ]
+	[S] [S]         [S]     [S]
+	[ ]             [ ]     [ ]
+	                [ ]     [ ]
+
+
+	Picosecond 13:
+	 0   1   2   3   4   5   6
+	[ ] [ ] ... (.) [ ] ... [ ]
+	[S] [S]         [S]     [S]
+	[ ]             [ ]     [ ]
+	                [ ]     [ ]
+
+	 0   1   2   3   4   5   6
+	[ ] [S] ... (.) [ ] ... [ ]
+	[ ] [ ]         [ ]     [ ]
+	[S]             [S]     [S]
+	                [ ]     [ ]
+
+
+	Picosecond 14:
+	 0   1   2   3   4   5   6
+	[ ] [S] ... ... ( ) ... [ ]
+	[ ] [ ]         [ ]     [ ]
+	[S]             [S]     [S]
+	                [ ]     [ ]
+
+	 0   1   2   3   4   5   6
+	[ ] [ ] ... ... ( ) ... [ ]
+	[S] [S]         [ ]     [ ]
+	[ ]             [ ]     [ ]
+	                [S]     [S]
+
+
+	Picosecond 15:
+	 0   1   2   3   4   5   6
+	[ ] [ ] ... ... [ ] (.) [ ]
+	[S] [S]         [ ]     [ ]
+	[ ]             [ ]     [ ]
+	                [S]     [S]
+
+	 0   1   2   3   4   5   6
+	[S] [S] ... ... [ ] (.) [ ]
+	[ ] [ ]         [ ]     [ ]
+	[ ]             [S]     [S]
+	                [ ]     [ ]
+
+
+	Picosecond 16:
+	 0   1   2   3   4   5   6
+	[S] [S] ... ... [ ] ... ( )
+	[ ] [ ]         [ ]     [ ]
+	[ ]             [S]     [S]
+	                [ ]     [ ]
+
+	 0   1   2   3   4   5   6
+	[ ] [ ] ... ... [ ] ... ( )
+	[S] [S]         [S]     [S]
+	[ ]             [ ]     [ ]
+	                [ ]     [ ]
+Because all smaller delays would get you caught, the fewest number of picoseconds you would need to delay to get through safely is 10.
+What is the fewest number of picoseconds that you need to delay the packet to pass through the firewall without being caught?
 
 */
