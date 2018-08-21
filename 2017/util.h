@@ -19,8 +19,14 @@
 #include <math.h>
 #include "byte.hpp"
 #include "c_array.hpp"
-#include "../stringx/include/stringx.hpp"
+
+#ifndef NO_LINQ
 #include "../linq/include/linq.hpp"
+#endif
+
+#ifndef NO_STRINGX
+#include "../stringx/include/stringx.hpp"
+#endif
 
 std::string get_file(const char *filename)
 {
