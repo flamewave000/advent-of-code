@@ -28,6 +28,8 @@
 #include "../stringx/include/stringx.hpp"
 #endif
 
+#define guard(cond) if(!(cond))
+
 std::string get_file(const char *filename)
 {
 	std::ifstream ifs(filename);

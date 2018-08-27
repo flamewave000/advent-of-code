@@ -17,44 +17,56 @@ void print(node *start)
     node *curr = start;
     do
     {
-        cout << curr->value << endl;
+        printf("%d\n", curr->value);
         curr = curr->next;
     } while (curr != start);
+    fflush(stdout);
+}
+
+void process(node** head, node** end, const int cycle, const int target) {
+    *head = new node(0);
+    (*head)->next = (*head)->prev = (*head);
+    *end = *head;
+    node *tmp;
+    for (int count = 1; true; count++)
+    {
+        guard(count % 50000) {
+            printf("\r%.1f%%", ((float)count / (float)target) * 100.0f);
+            fflush(stdout);
+        }
+        tmp = new node(count);
+        tmp->prev = *end;
+        tmp->next = (*end)->next;
+        (*end)->next = tmp;
+        *end = tmp;
+
+        if(count == target) break;
+
+        for(int c = 0; c < (cycle % count); c++) {
+            *end = (*end)->next;
+        }
+    }
 }
 
 int puzzle_a(const string &input)
 {
-    const int cycle = stoi(input);
-    node *first = new node(0);
-    first->next = first->prev = first;
-    node *curr = first;
-    node *tmp;
 #if TEST
-    const int target = 10;
+    const int target = 2017;
 #else
-    const int target = 2018;
+    const int target = 2017;
 #endif
-    for (int count = 1; true; count++)
-    {
-        tmp = new node(count);
-        tmp->prev = curr;
-        tmp->next = curr->next;
-        curr->next = tmp;
-        curr = tmp;
-
-        if(count == target - 1) break;
-
-        for(int c = 0; c < (cycle % count); c++) {
-            curr = curr->next;
-        }
-    }
-    print(first);
-    return curr->next->value;
+    node *head, *end;
+    process(&head, &end, stoi(input), target);
+    print(head);
+    return end->next->value;
 }
 
 int puzzle_b(const string &input)
 {
-    return 0;
+    node *head, *end;
+    process(&head, &end, stoi(input), 50000000);
+    // print(head);
+    return head->next->value;
 }
 
 int main(int argc, const char *argv[])
@@ -71,6 +83,13 @@ int main(int argc, const char *argv[])
 }
 
 /*
+
+NO GOOD:
+1222153
+1583817
+15958393
+25923049
+
 http://adventofcode.com/2017/day/17
 
 --- Day 17: Spinlock ---
@@ -107,5 +126,16 @@ Perhaps, if you can identify the value that will ultimately be after the last va
 
 What is the value after 2017 in your completed circular buffer?
 
+--- Part Two ---
+
+The spinlock does not short-circuit. Instead, it gets more angry. At least, you assume that's what happened; it's spinning significantly faster than it was a moment ago.
+
+You have good news and bad news.
+
+The good news is that you have improved calculations for how to stop the spinlock. They indicate that you actually need to identify the value after 0 in the current state of the circular buffer.
+
+The bad news is that while you were determining this, the spinlock has just finished inserting its fifty millionth value (50000000).
+
+What is the value after 0 the moment 50000000 is inserted?
 
 */
