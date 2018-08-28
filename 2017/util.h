@@ -29,6 +29,8 @@
 #endif
 
 #define guard(cond) if(!(cond))
+#define PRINT_LINE() printf("LINE %d\n", __LINE__)
+#define PRINT_FLINE() printf("LINE %s:%d\n", __FILE__, __LINE__)
 
 std::string get_file(const char *filename)
 {
