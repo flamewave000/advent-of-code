@@ -38,8 +38,19 @@ inline bool operator!=(const char &c, const path_type &p) { return c != (char)p;
 inline bool operator!=(const path_type &p, const char &c) { return (char)p != c; }
 #pragma endregion
 
-string puzzle_a(const vector<string> &lines) {
+
+int main(int argc, const char *argv[]) {
+	config c = proc(argc, argv, __FILE__);
+
+#if TEST
+	cout << test_data << endl;
+	vector<string> lines = split(test_data, '\n');
+#else
+	vector<string> lines = split(c.input, '\n');
+#endif
+
 	string letters;
+	int64_t steps = 0;
 
 	size_t xsize = lines[0].size(), ysize = lines.size();
 	svec2 dir = {0, 1};
@@ -61,12 +72,14 @@ string puzzle_a(const vector<string> &lines) {
 		// if our position has gone outside the bounds of the array
 		if (pos.x < 0 || pos.x >= xsize || pos.y < 0 || pos.y >= ysize) {
 			printf("END: OUT OF RANGE\n");
+			steps++;
 			break;
 		}
 		const char current = FETCH(0, 0);
 		// if we hit whitespace, we're done
 		if (current == path_type::none) {
 			printf("END: WHITESPACE\n");
+			steps++;
 			break;
 		}
 		// if we are at an intersection
@@ -104,28 +117,10 @@ string puzzle_a(const vector<string> &lines) {
 			printf("FOUND %c\n", current);
 		}
 		pos += dir;
+		steps++;
 	}
 #undef FETCH
-	printf("Final Position: %lld, %lld\n", pos.x, pos.y);
-	return letters;
-}
-
-string puzzle_b(const vector<string> &lines) {
-	return "NO-OP";
-}
-
-int main(int argc, const char *argv[]) {
-	config c = proc(argc, argv, __FILE__);
-
-#if TEST
-	cout << test_data << endl;
-	vector<string> lines = split(test_data, '\n');
-#else
-	vector<string> lines = split(c.input, '\n');
-#endif
-
-	auto result = (c.puzzle == 1 ? puzzle_a(lines) : puzzle_b(lines));
-	cout << "\nResult:" << result << endl;
+	printf("Final Position: %lld, %lld\n\nLetters: %s\nSteps: %lld\n", pos.x, pos.y, letters.c_str(), steps);
 	return 0;
 }
 
@@ -158,5 +153,39 @@ Given this diagram, the packet needs to take the following path:
 Following the path to the end, the letters it sees on its path are ABCDEF.
 
 The little packet looks up at you, hoping you can help it find the way. What letters will it see (in the order it would see them) if it follows the path? (The routing diagram is very wide; make sure you view it without line wrapping.)
+
+Your puzzle answer was HATBMQJYZ.
+
+--- Part Two ---
+
+The packet is curious how many steps it needs to go.
+
+For example, using the same routing diagram from the example above...
+
+┌────────────────┐
+│     |          │
+│     |  +--+    │
+│     A  |  C    │
+│ F---|--|-E---+ │
+│     |  |  |  D │
+│     +B-+  +--+ │
+└────────────────┘
+
+...the packet would go:
+
+    6 steps down (including the first line at the top of the diagram).
+    3 steps right.
+    4 steps up.
+    3 steps right.
+    4 steps down.
+    3 steps right.
+    2 steps up.
+    13 steps left (including the F it stops on).
+
+This would result in a total of 38 steps.
+
+How many steps does the packet need to go?
+
+Your puzzle answer was 16332.
 
 */
