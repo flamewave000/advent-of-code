@@ -17,6 +17,7 @@
 #include <functional>
 #include <algorithm>
 #include <math.h>
+#include <list>
 #include "byte.hpp"
 #include "c_array.hpp"
 
@@ -31,6 +32,13 @@
 #define guard(cond) if(!(cond))
 #define PRINT_LINE() printf("LINE %d\n", __LINE__)
 #define PRINT_FLINE() printf("LINE %s:%d\n", __FILE__, __LINE__)
+
+#define PROGRESS(curr, max, skip) if((curr % skip) == 0) { printf("\r%.1f%%", ((float)curr / (float)max) * 100.0f); fflush(stdout); }
+#define MPROGRESS(msg, perc) printf("\r%s %.2f", msg, perc)
+
+
+#define PERF_START() auto __start__ = std::chrono::high_resolution_clock::now()
+#define PERF_END() (std::chrono::duration<float, std::milli>(std::chrono::high_resolution_clock::now() - __start__).count())
 
 std::string get_file(const char *filename)
 {

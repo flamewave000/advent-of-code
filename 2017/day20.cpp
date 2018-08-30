@@ -1,4 +1,5 @@
 #include "util.h"
+#include <chrono>
 #include <regex>
 
 #define TEST false
@@ -11,7 +12,7 @@ const char *test_data = R"(p=<3,0,0>, v=<2,0,0>, a=<-1,0,0>
 p=<4,0,0>, v=<0,0,0>, a=<-2,0,0>)";
 
 struct vec3 {
-	int64_t x, y, z;
+	int x, y, z;
 	vec3() : x(0), y(0), z(0) {}
 	vec3(int x, int y, int z) : x(x), y(y), z(z) {}
 	vec3 &operator+=(const vec3 &rhs) {
@@ -20,33 +21,26 @@ struct vec3 {
 		this->z += rhs.z;
 		return *this;
 	}
+	bool operator==(const vec3 &rhs) const {
+		return x == rhs.x && y == rhs.y && z == rhs.z;
+	}
 };
-// inline vec3 operator+(const vec3 &lhs, const vec3 &rhs) {
-// 	return vec3 {lhs.x + rhs.x,
-// 			lhs.y + rhs.y,
-// 			lhs.z + rhs.z};
-// }
-// inline vec3 operator-(const vec3 &lhs, const vec3 &rhs) {
-// 	return {lhs.x - rhs.x,
-// 			lhs.y - rhs.y,
-// 			lhs.z - rhs.z};
-// }
-// inline vec3 operator*(const vec3 &lhs, const vec3 &rhs) {
-// 	return {lhs.x * rhs.x,
-// 			lhs.y * rhs.y,
-// 			lhs.z * rhs.z};
-// }
-// inline vec3 operator/(const vec3 &lhs, const vec3 &rhs) {
-// 	return {lhs.x / rhs.x,
-// 			lhs.y / rhs.y,
-// 			lhs.z / rhs.z};
-// }
-inline ostream &operator<<(ostream &lhs, const vec3 &rhs) {
+
+struct vec3_hash {
+	size_t operator()(const vec3 &key) const {
+		return (std::hash<int>()(key.x) ^ (std::hash<int>()(key.y) << 1) >> 1) ^ (std::hash<int>()(key.z) << 1);
+	}
+};
+inline ostream &
+operator<<(ostream &lhs, const vec3 &rhs) {
 	return lhs << '{' << rhs.x << ',' << rhs.y << ',' << rhs.z << '}';
 }
 
 struct particle {
 	vec3 pos, vel, acc;
+	bool dead;
+
+	particle() : dead(false) {}
 
 	inline void tick(bool print = false) {
 		if (print)
@@ -62,23 +56,80 @@ inline ostream &operator<<(ostream &lhs, const particle &rhs) {
 	return lhs << "<pos:" << rhs.pos << ", vel:" << rhs.vel << ", acc:" << rhs.acc << '>';
 }
 
-int puzzle_a(const string &input) {
-	return 0;
+size_t puzzle_a(vector<particle> &particles) {
+
+	uint64_t distance = UINT64_MAX;
+	size_t index = 0;
+
+	const int ITERATIONS = 1000;
+
+	cout << "Iterations: " << ITERATIONS << endl;
+	for (size_t c = 0, i = 0, size = particles.size(); i < size; i++) {
+		for (c = 0; c < ITERATIONS; c++)
+			particles[i].tick();
+		auto dist = particles[i].distance();
+		if (dist < distance) {
+			distance = dist;
+			index = i;
+		}
+	}
+	return index;
 }
 
-int puzzle_b(const string &input) {
-	return 0;
+struct entry {
+	size_t initial;
+	size_t count;
+	entry() : initial(0), count(0) {}
+	entry(size_t initial, size_t count) : initial(initial), count(count) {}
+};
+
+int puzzle_b(vector<particle> &particles) {
+	const int ITERATIONS = 1000000;
+	unordered_map<vec3, entry, vec3_hash> positions;
+	double avg = 0;
+	for (size_t c = 0, i, size = particles.size(); c < ITERATIONS; c++) {
+		PROGRESS(c, ITERATIONS, 1000)
+		positions.clear();
+		PERF_START();
+		for (i = 0; i < size; i++) {
+			particle &p = particles[i];
+			if (p.dead)
+				continue;
+			p.tick();
+			entry &e = positions[particles[i].pos];
+			if (e.count == 0) {
+				e.initial = i;
+				e.count = 1;
+				continue;
+			}
+			e.count++;
+			if (e.count >= 1) {
+				p.dead = true;
+				if (e.count == 2)
+					particles[e.initial].dead = true;
+			}
+		}
+		avg += PERF_END();
+	}
+	cout << "\nDuration: " << (avg > 1000.0 ? avg / 1000.0 : avg) << (avg > 1000.0 ? "s Avg: " : "ms Avg: ") << (avg / (double)ITERATIONS) << "ms" << endl;
+	int count = 0;
+	for (size_t c = 0, size = particles.size(); c < size; c++) {
+		if (!particles[c].dead)
+			count++;
+	}
+	return count;
 }
 
 int main(int argc, const char *argv[]) {
 	config c = proc(argc, argv, __FILE__);
 
-	vector<particle> particles;
 #if TEST
 	vector<string> lines = split(test_data, '\n');
 #else
 	vector<string> lines = split(c.input, '\n');
 #endif
+
+	vector<particle> particles;
 	regex rx("p=<(-?\\d+),(-?\\d+),(-?\\d+)>, v=<(-?\\d+),(-?\\d+),(-?\\d+)>, a=<(-?\\d+),(-?\\d+),(-?\\d+)>");
 	smatch matches;
 	for (auto line : lines) {
@@ -96,25 +147,10 @@ int main(int argc, const char *argv[]) {
 		particles.push_back(move(p));
 	}
 
-	uint64_t distance = UINT64_MAX;
-	size_t index = 0;
-
-	const int ITERATIONS = 1000000;
-
-	for (size_t c = 0, i = 0, size = particles.size(); i < size; i++) {
-		// cout << "Particle(" << i << "): " << particles[i] << flush;
-		for (c = 0; c < ITERATIONS; c++)
-			particles[i].tick();
-		auto dist = particles[i].distance();
-		// cout << " Result: " << particles[i] << " (" << distance << ')' << endl;
-		if (dist < distance) {
-			distance = dist;
-			index = i;
-		}
-	}
+	size_t result = c.puzzle == 1 ? puzzle_a(particles) : puzzle_b(particles);
 
 	// auto result = c.puzzle == 1 ? puzzle_a(c.input) : puzzle_b(c.input);
-	cout << "\nResult: " << index << ": " << distance << endl;
+	cout << "\nResult: " << result << endl;
 	return 0;
 }
 
@@ -157,5 +193,37 @@ At this point, particle 1 will never be closer to <0,0,0> than particle 0, and s
 Which particle will stay closest to position <0,0,0> in the long term?
 
 Your puzzle answer was 308.
+
+--- Part Two ---
+
+To simplify the problem further, the GPU would like to remove any particles that collide. Particles collide if their positions ever exactly match. Because particles are updated simultaneously, more than two particles can collide at the same time and place. Once particles collide, they are removed and cannot collide with anything else after that tick.
+
+For example:
+
+p=<-6,0,0>, v=< 3,0,0>, a=< 0,0,0>    
+p=<-4,0,0>, v=< 2,0,0>, a=< 0,0,0>    -6 -5 -4 -3 -2 -1  0  1  2  3
+p=<-2,0,0>, v=< 1,0,0>, a=< 0,0,0>    (0)   (1)   (2)            (3)
+p=< 3,0,0>, v=<-1,0,0>, a=< 0,0,0>
+
+p=<-3,0,0>, v=< 3,0,0>, a=< 0,0,0>    
+p=<-2,0,0>, v=< 2,0,0>, a=< 0,0,0>    -6 -5 -4 -3 -2 -1  0  1  2  3
+p=<-1,0,0>, v=< 1,0,0>, a=< 0,0,0>             (0)(1)(2)      (3)   
+p=< 2,0,0>, v=<-1,0,0>, a=< 0,0,0>
+
+p=< 0,0,0>, v=< 3,0,0>, a=< 0,0,0>    
+p=< 0,0,0>, v=< 2,0,0>, a=< 0,0,0>    -6 -5 -4 -3 -2 -1  0  1  2  3
+p=< 0,0,0>, v=< 1,0,0>, a=< 0,0,0>                       X (3)      
+p=< 1,0,0>, v=<-1,0,0>, a=< 0,0,0>
+
+------destroyed by collision------    
+------destroyed by collision------    -6 -5 -4 -3 -2 -1  0  1  2  3
+------destroyed by collision------                      (3)         
+p=< 0,0,0>, v=<-1,0,0>, a=< 0,0,0>
+
+In this example, particles 0, 1, and 2 are simultaneously destroyed at the time and place marked X. On the next tick, particle 3 passes through unharmed.
+
+How many particles are left after all collisions are resolved?
+
+Your puzzle answer was 504.
 
 */
