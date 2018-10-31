@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [ $1 = "--help" ]; then
+    echo "$0 <year> <day> <puzzle: 1/2> [-f/-d] [file/data]"
+else
+    cd common && make year=$1 day=$2 > /dev/null && printf "Compiled Successfully\n\n" && ../$1/bin/day$2 -$3 $4 $5
+fi
