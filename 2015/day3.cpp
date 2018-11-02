@@ -11,49 +11,41 @@ enum direction {
 	WEST = '<'
 };
 
-int puzzle_a(const string &input) {
-	unordered_map<int, unordered_map<int, int>> house_map;
-	house_map[0][0] = 1;
-
-	int house_count = 1;
-	int x = 0, y = 0;
-	for (size_t c = 0, size = input.size(); c < size; c++) {
-		switch (input[c]) {
-		case NORTH:
-			y++;
-			break;
-		case EAST:
-			x++;
-			break;
-		case SOUTH:
-			y--;
-			break;
-		case WEST:
-			x--;
-			break;
-		default:
-			cerr << "INVALID COMMAND" << endl;
-			exit(EXIT_FAILURE);
-		}
-		auto col = house_map.find(x);
-		if (col == house_map.end() || col->second.find(y) == col->second.end()) {
-			house_map[x][y] = 1;
-			house_count++;
-		} else
-			house_map[x][y]++;
+void process(const char &c, int &x, int &y, int &house_count, unordered_map<int, unordered_set<int>> &house_map) {
+	if (c == NORTH) y++;
+	else if (c == EAST) x++;
+	else if (c == SOUTH) y--;
+	else if (c == WEST) x--;
+	else {
+		cerr << "INVALID COMMAND: " << c << endl;
+		exit(EXIT_FAILURE);
 	}
-	return house_count;
-}
-
-int puzzle_b(const string &input) {
-	return 0;
+	auto it = house_map.find(x);
+	if (it == house_map.end() || it->second.find(y) == it->second.end()) {
+		house_map[x].insert(y);
+		house_count++;
+	}
 }
 
 int main(int argc, const char *argv[]) {
-	config c = proc(argc, argv, __FILE__);
+	config cfg = proc(argc, argv, __FILE__);
 
-	auto result = c.puzzle == 1 ? puzzle_a(c.input) : puzzle_b(c.input);
-	cout << "\nResult: " << result << endl;
+	unordered_map<int, unordered_set<int>> house_map;
+	house_map[0].insert(0);
+	int house_count = 1;
+
+	if (cfg.puzzle == 1) {
+		int x = 0, y = 0;
+		for (size_t c = 0, size = cfg.input.size(); c < size; c++) {
+			process(cfg.input[c], x, y, house_count, house_map);
+		}
+	} else {
+		int sx = 0, sy = 0, rx = 0, ry = 0;
+		for (size_t c = 0, size = cfg.input.size(); c < size; c++) {
+			process(cfg.input[c], c % 2 ? sx : rx, c % 2 ? sy : ry, house_count, house_map);
+		}
+	}
+	cout << "\nResult: " << house_count << endl;
 	return EXIT_SUCCESS;
 }
 
@@ -75,5 +67,21 @@ For example:
  - `^v^v^v^v^v` delivers a bunch of presents to some very lucky children at only 2 houses.
 
 Your puzzle answer was 2565.
+
+--- Part Two ---
+
+The next year, to speed up the process, Santa creates a robot version of himself, Robo-Santa, to deliver presents with him.
+
+Santa and Robo-Santa start at the same location (delivering two presents to the same starting house), then take turns moving based on instructions from the elf, who is eggnoggedly reading from the same script as the previous year.
+
+This year, how many houses receive at least one present?
+
+For example:
+
+ - ^v delivers presents to 3 houses, because Santa goes north, and then Robo-Santa goes south.
+ - ^>v< now delivers presents to 3 houses, and Santa and Robo-Santa end up back where they started.
+ - ^v^v^v^v^v now delivers presents to 11 houses, with Santa going one direction and Robo-Santa going the other.
+
+Your puzzle answer was 2639.
 
 */
