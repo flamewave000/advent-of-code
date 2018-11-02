@@ -20,6 +20,7 @@
 #include <list>
 #include "byte.hpp"
 #include "c_array.hpp"
+#include "md5.hpp"
 
 #ifndef NO_LINQ
 #include "../linq/include/linq.hpp"
